@@ -1,0 +1,567 @@
+---
+title: "STAT240 Final Project"
+date: "2023-04-18"
+output: html_document
+---
+
+---
+Group Members
+STEVEN GE
+Cathryn TOH
+BENJAMIN BRANDEL
+JINHAN YANG
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(tidyverse)
+library(ggplot2)
+library(gridExtra)
+```
+
+
+## Introduction
+With water being a necessity to populations all across the globe, we decided to focus on access to safe drinking water along with the factors that affect it for our project. There is a general consensus that some countries tend to have higher access to safe drinking water with the years growing, but we wanted to research and make inferences to see if this was actually the case. Based off of this curiosity, our question of interest is: does higher GDP necessarily mean higher access to safe drinking water?
+
+**Thesis statement:** The higher the GDP of a country, the higher its access to safe drinking water.
+
+
+## Background
+> The data set was collected by AQUASTAT. AQUASTAT is an organization that collects data about water usage from different countries. We selected 8 variables from the many indicators and data that AQUASTAT has information on: `GDP`, `Population density`, `Rural population`, `Rural population with access to safe dringking-water`, `Total population`, `Total population with access to safe drinking-water`, `Urban population`, and `Urban population with acccess to safe drinking-water`. 
+
+**GDP**: Gross Domestic Product (the monetary value of goods and services produced within a country’s borders in a given time period, in USD)
+
+**log_gdp** Log 10 of Gross Domestic Product (the monetary value of goods and services produced within a country’s borders in a given time period, in USD)
+
+**Population density**: Population per km2
+
+**Total population**: Total population of that country (per 1000 inhabitants)
+
+**Rural population**: Total population of that country living in rural areas (per 1000 inhabitants)
+
+**Urban population**: Total population of that country living in urban areas (per 1000 inhabitants)
+
+**Total population with access to safe drinking-water**: % of total population with access to safe drinking-water
+
+**Rural population with access to safe drinking-water**: % of rural population with access to safe drinking-water
+
+**Urban population with access to safe drinking-water**: % of urban population with access to safe drinking-water
+
+> This data was sourced from this URL: https://tableau.apps.fao.org/views/ReviewDashboard-v1/result_country?%3Aembed=y&%3AisGuestRedirectFromVizportal=y
+
+
+> We want to find out if there exists any relationship between GDP and population access with safe drinking-water, so we chose GDP and population with access to safe drinking-water to determine if these pieces of data have any correlation. 
+
+> However, there are some interesting factors that affect our result. Initially, we intended to create a plot to compare the developing countries and developed countries to prove our hypothesis, but some developing countries had similar data to the developed countries in the data set. Take Bulgaria as an example. Bulgaria's GDP is much lower than the United States, but Bulgaria has the same population percentage with access to safe drinking-water. By looking at the world map, we discovered that Bulgaria is nearby the Black Sea and the Mediterranean Sea, so we hypothesized that this could possibly be the reason why a developing and low-GDP country has the same extent of access to safe drinking-water as the United States. 
+
+> In the rest of this report, we introduced linear regression summaries between GDP and total population with access to safe drinking-water among all countries and among different countries separately (this is not causation). We used linear regression to predict what the future total population with access to safe drinking-water level is for countries that have not yet arrived at 100% total population with access to safe drinking-water level. We also utilized scatter plots of different countries in the report to visualize the relation between GDP and total population with access to safe drinking-water, and compare the difference bewteen countries.
+
+## Analysis
+
+```{r, include=FALSE}
+df = read_csv("AQUASTAT.csv")
+question1 = select(df,"Country","Year","Variable","value")
+
+question1 = question1%>%pivot_wider(names_from = Variable,values_from = value)%>%
+  mutate(log_gdp = log(`Gross Domestic Product (GDP)`))
+
+write_csv(question1,'new_aquastat.csv')
+```
+
+
+> Below is GDP vs total population with access to safe drinking-water in all countries all over world
+
+```{r,echo=FALSE}
+question1%>%
+ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`,col=factor(Year)))+
+  geom_point()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab("Total population with access to safe drinking-water")+
+  ggtitle("World log_gdp VS Total population with access to safe drinking-water")
+
+```
+
+
+
+> Overall, for different years, the relationship between total population with access to safe drinking water and log_gdp is positive without considering whether the simple linear method is appropriate or not here.
+
+We are interested in finding out if the slope of the regression line is positive or not.
+
+### Hypothesis Test of all countries slope of regression lines in graph log_gdp vs Total population with access to safe drinking-water (2000-2020)
+
+>Estimated model for regression line
+$Y_i = \beta_0 +\beta_1 * X_i$
+
+>Hypothesis
+
+$H_0 : \beta_1 = 0$
+$H_a : \beta_1 > 0$
+
+>Test statistic
+
+```{r}
+lm_world = lm(`Total population with access to safe drinking-water (JMP)`~log_gdp,data = question1)
+
+summary(lm_world)
+```
+
+Test statistic for slope is 12.973
+
+>P_value
+
+p_value = (1-pt(12.973,df=627)) = 0 approximately.
+
+>Summary
+
+The p_value is less than 5%. So this value is extremely significant and we can reject the null hypothesis that slope = 0. We do have enough evidence to prove that the slope is larger than 0. It seems that the slope of regression line here is positive. It seems that the higher GDP, the higher the access to safe drinking-water of total population.
+
+
+
+> However. considering the influence of a variety of other factors such as continent, weather, and economy, it is hard to generate a plausible conclusion about the relation between GDP and total population with access to safe drinking-water of countries all over the world. It might be more reasonable to focus on a single country's data.
+
+
+
+
+
+```{r,include=FALSE}
+## North America
+question1_usa = question1%>%filter(Country == "United States of America")
+question1_canada = question1%>%filter(Country == "Canada")
+
+## Asia
+question1_china = question1%>%filter(Country == "China")
+question1_bhutan = question1%>%filter(Country == "Bhutan")
+question1_north_korea = question1%>%filter(Country == "Democratic People's Republic of Korea ")
+question1_japan = question1%>%filter(Country == "Japan")
+question1_south_korea = question1%>%filter(Country == "Republic of Korea")
+question1_singapore = question1%>%filter(Country == "Singapore")
+question1_srilanka = question1%>%filter(Country == "Sri Lanka")
+question1_tajikistan = question1%>%filter(Country == "Tajikistan")
+question1_thailand = question1%>%filter(Country == "Thailand")
+question1_united_arab_emirates = question1%>%filter(Country == "United Arab Emirates")
+question1_vietnam = question1%>%filter(Country == "Viet Nam")
+
+## Africa
+question1_congo = question1%>%filter(Country == "Congo")
+question1_zambia = question1%>%filter(Country == "Zambia")
+question1_republic_congo = question1%>%filter(Country == "Democratic Republic of the Congo")
+
+## Oceania
+question1_australia = question1%>%filter(Country == "Australia")
+
+## Europe
+question1_austria = question1%>%filter(Country == "Austria")
+question1_belarus = question1%>%filter(Country == "Belarus")
+question1_bulgaria = question1%>%filter(Country == "Bulgaria")
+question1_cyprus = question1%>%filter(Country == "Cyprus")
+question1_denmark = question1%>%filter(Country == "Denmark")
+question1_portugal = question1%>%filter(Country == "Portugal")
+question1_sweden = question1%>%filter(Country == "Sweden")
+question1_switzerland = question1%>%filter(Country == "Switzerland")
+question1_uk = question1%>%filter(Country == "United Kingdom of Great Britain and Northern Ireland")
+
+## South America
+question1_Brazil = question1%>%filter(Country == "Brazil")
+question1_colombia = question1%>%filter(Country == "Colombia")
+question1_suriname = question1%>%filter(Country == "Suriname")
+question1_trinidad_and_tobago = question1%>%filter(Country == "Trinidad and Tobago")
+```
+
+
+> For the chunks below, we used the ggplot2 package to create several plots. We used the functions geom_point and geom_line to track the change of log_gdp and total population with access to safe drinking-water. We also utilized geom_smooth(method="lm") to create several regression lines to generate trends which is helpful in visualizing the relation between log_gdp and total population with access to safe drinking-water.
+
+## North America
+```{r,echo=FALSE}
+p1 = question1_usa%>%
+ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab("Total population with access to safe drinking-water")+
+  ggtitle("USA log_gdp VS Total population with access to safe drinking-water")
+
+p2 = question1_canada%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('total population with access to safe drinking-water')+
+  ggtitle("Canada log_gdp VS total population with access to safe drinking-water")
+
+grid.arrange(p1, p2, nrow = 2, ncol = 1)
+
+numerical_summary_usa = question1%>%filter(Country=="United States of America")%>%
+select(log_gdp,`Total population with access to safe drinking-water (JMP)`)%>%
+summarize(meanlog_gdp = mean(log_gdp),
+          mean_jmp = mean(`Total population with access to safe drinking-water (JMP)`),
+          sd_jmp=sd(`Total population with access to safe drinking-water (JMP)`),
+          r = cor(`Total population with access to safe drinking-water (JMP)`,log_gdp))
+numerical_summary_usa
+```
+
+Based on the scatter plots of Canada and the United States of America, the relationship between GDP and total population with access to safe drinking-water can be categorized into two different types. The United States has a roughly positive relation between GDP and total population with access to safe drinking-water, but Canada has a horizontal line approximately which potentialy shows that GDP has no influence on Canada's total population with access to safe drinking-water. 
+
+By inferring based on the correlation between total population with access to safe drinking-water and log_gdp of USA, we can safely conclude that for USA, as log_gdp get larger, the percentage of the total population with access to safe drinking-water tends to increase. 
+
+For the inference, we used the cor() function to get the correlation coefficient of these two variables.
+
+## Hypothesis Test of USA's slope of regression line in graph log_gdp vs Total population with access to safe drinking-water
+
+>Estimated model for regression line
+$Y_i = \beta_0 +\beta_1 * X_i$
+
+>Hypothesis
+
+$H_0 : \beta_1 = 0$
+$H_a : \beta_1 \neq 0$
+
+>Test statistic
+
+```{r,echo=FALSE}
+usa_compare_data = question1_usa%>%select(log_gdp,`Total population with access to safe drinking-water (JMP)`)
+
+lm_usa = lm(`Total population with access to safe drinking-water (JMP)`~log_gdp,data = usa_compare_data)
+
+summary(lm_usa)
+```
+
+Test statistic for slope is 14.02
+
+>P_value
+
+p_value = 2*(1-pt(14.03,df=19)) = 1.79e-11 approximately.
+
+>Summary
+
+The p_value is less than 1%. This value is very significant and we can reject the null hypothesis that slope = 0. We do have evidence to prove that the slope is not equal to 0. The simple linear method is appropriate here.
+
+
+> We are interested in the slope of regression line between Total population with access to safe drinking-water and log_gdp and finding out if it is equal to 0 or not. The result shows that it is most likely that slope of regression line is not equal to 0.
+
+## Asia
+```{r,echo=FALSE}
+q1 = question1_china%>%
+ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab("total population with access to safe drinking-water")+
+  ggtitle("China log_gdp VS Total population with access to safe drinking-water")
+
+q2 = question1_bhutan%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('Total population with access to safe drinking-water')+
+  ggtitle("Bhutan log_gdp VS Total population with access to safe drinking-water")
+
+q3 = question1_japan%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('Total population with access to safe drinking-water')+
+  ggtitle("Japan log_gdp VS Total population with access to safe drinking-water")
+
+q4 = question1_south_korea%>%
+ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab("Total population with access to safe drinking-water")+
+  ggtitle("South Korea log_gdp VS Total population with access to safe drinking-water")
+
+q5 = question1_singapore%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('Total population with access to safe drinking-water')+
+  ggtitle("Singapore log_gdp VS Total population with access to safe drinking-water")
+
+q6 = question1_srilanka%>%
+ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab("Total population with access to safe drinking-water")+
+  ggtitle("Srilanka log_gdp VS Total population with access to safe drinking-water")
+
+q7 = question1_tajikistan%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('Total population with access to safe drinking-water')+
+  ggtitle("Tajikistan log_gdp VS Total population with access to safe drinking-water")
+
+q8 = question1_thailand%>%
+ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab("Total population with access to safe drinking-water")+
+  ggtitle("Thailand log_gdp VS Total population with access to safe drinking-water")
+
+q9 = question1_vietnam%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('Total population with access to safe drinking-water')+
+  ggtitle("Vietnam log_gdp VS Total population with access to safe drinking-water")
+grid.arrange(q1,q2,q3, nrow = 3, ncol = 1)
+grid.arrange(q4,q5,q6, nrow = 3, ncol = 1)
+grid.arrange(q7,q8,q9, nrow = 3, ncol = 1)
+
+numerical_summary_china = question1%>%filter(Country=="China")%>%
+select(log_gdp,`Total population with access to safe drinking-water (JMP)`)%>%
+summarize(meanlog_gdp = mean(log_gdp),
+          mean_jmp = mean(`Total population with access to safe drinking-water (JMP)`),
+          sd_jmp=sd(`Total population with access to safe drinking-water (JMP)`),
+          r = cor(`Total population with access to safe drinking-water (JMP)`,log_gdp))
+numerical_summary_china
+```
+
+For the nine plots above, the relation between log_gdp and total population with access to safe drinking-water can also be categorized into two different groups. The first category is a horizontal line represented by Japan and Singapore. The second category is a positive line represented by China, Bhutan, South Korea, Sri Lanka, Tajikistan, Thailand, and Vietnam. For Japan and Singapore, the log_gdp seems to have no influence on their total population with access to safe drinking-water and for the other countries, the total population with access to safe drinking-water increases as log_gdp increases.
+
+Specifically for China, its correlation coefficient (which was determined by the cor() function) shows a significant positive relation between log_gdp and total population with access to safe drinking-water. It seems that as log_gdp for China gets larger, the percentage of the total population with access to safe drinking-water tends to increase.
+
+
+## Africa
+```{r,echo=FALSE}
+e1 = question1_congo%>%
+ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab("Total population with access to safe drinking-water")+
+  ggtitle("Congo log_gdp VS Total population with access to safe drinking-water")
+
+e2 = question1_zambia%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('Total population with access to safe drinking-water')+
+  ggtitle("Zambia log_gdp VS Total population with access to safe drinking-water")
+
+e3 = question1_republic_congo%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('Total population with access to safe drinking-water')+
+  ggtitle("Republic of Congo log_gdp VS Total population with access to safe drinking-water")
+
+grid.arrange(e1,e2,e3, nrow = 3, ncol = 1)
+
+summary_africa = question1%>%
+  filter(Country=="Congo"|Country=="Zambia"|Country == "Republic of Congo")%>%
+  summarize(
+          mean_jmp = mean(`Total population with access to safe drinking-water (JMP)`),
+          mean_log_gdp = mean(log_gdp),
+          sd_jmp=sd(`Total population with access to safe drinking-water (JMP)`))
+summary_africa
+```
+
+From the three plots above, the relation between log_gdp and total population with access to safe drinking-water are all positive lines represented by Congo, Zambia, and Republic of Congo. Total population with access to safe drinking-water seems to increase when log_gdp increases.
+
+Note: The overall total population with access to safe drinking-water of these countries from Africa is significantly less than other countries in different continents. The mean total population with access to safe drinking-water of these three chosen countries in Africa is only 67.27%
+
+## Oceania
+```{r,echo=FALSE}
+question1_australia%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('Total population with access to safe drinking-water')+
+  ggtitle("Australia log_gdp VS Total population with access to safe drinking-water")
+
+```
+
+Oceania is dominated by the nation of Australia. From the plot above, it is a horizontal line and it is plausible because this continent is totally surrounded by ocean (and is also highly developed). So for this country, it seems that the log_gdp has no influence on access to safe water.
+
+
+## Hypothesis Test of Australia's slope of regression line in graph log_gdp vs Total population with access to safe drinking-water
+
+>Estimated model for regression line
+$Y_i = \beta_0 +\beta_1 * X_i$
+
+>Hypothesis
+
+$H_0 : \beta_1 = 0$
+$H_a : \beta_1 \neq 0$
+
+>Test statistic
+
+```{r,echo=FALSE}
+australia_compare_data = question1_australia%>%select(log_gdp,`Total population with access to safe drinking-water (JMP)`)
+
+lm_australia = lm(`Total population with access to safe drinking-water (JMP)`~log_gdp,data = australia_compare_data)
+
+summary(lm_australia)
+```
+
+Test statistic for slope is 7.820e-01  
+
+>P_value
+
+p_value = 2*(1-pt(7.820e-01  ,df=19)) = 0.444 approximately.
+
+>Summary
+
+The p_value is much larger than 5%. So this value is not significant and we fail to reject the null hypothesis that slope = 0. We do have enough evidence to prove that the slope is not equal to 0. It seems that the slope of regression line here is equal to 0.
+
+> We are interested in the slope of Australia's regression line because it looks horizontal and straight. The result proves the hypothesis we have that there is no apparent relationship between log_gdp and total population with access to safe drinking water.
+
+
+## Europe
+```{r,echo=FALSE}
+a1 = question1_austria%>%
+ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab("Total population with access to safe drinking-water")+
+  ggtitle("Austria log_gdp VS Total population with access to safe drinking-water")
+
+a2 = question1_belarus%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('Total population with access to safe drinking-water')+
+  ggtitle("Belarus log_gdp VS Total population with access to safe drinking-water")
+
+a3 = question1_bulgaria%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('Total population with access to safe drinking-water')+
+  ggtitle("Bulgaria log_gdp VS Total population with access to safe drinking-water")
+
+a4 = question1_cyprus%>%
+ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab("Total population with access to safe drinking-water")+
+  ggtitle("Cyprus log_gdp VS Total population with access to safe drinking-water")
+
+a5 = question1_denmark%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('Total population with access to safe drinking-water')+
+  ggtitle("Denmark log_gdp VS Total population with access to safe drinking-water")
+
+a6 = question1_portugal%>%
+ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab("Total population with access to safe drinking-water")+
+  ggtitle("Portugal log_gdp VS Total population with access to safe drinking-water")
+
+a7 = question1_sweden%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('Total population with access to safe drinking-water')+
+  ggtitle("Sweden log_gdp VS Total population with access to safe drinking-water")
+
+a8 = question1_switzerland%>%
+ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab("Total population with access to safe drinking-water")+
+  ggtitle("Switzerland log_gdp VS Total population with access to safe drinking-water")
+
+a9 = question1_uk%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('Total population with access to safe drinking-water')+
+  ggtitle("UK log_gdp VS Total population with access to safe drinking-water")
+grid.arrange(a1,a2,a3, nrow = 3, ncol = 1)
+grid.arrange(a4,a5,a6, nrow = 3, ncol = 1)
+grid.arrange(a7,a8,a9, nrow = 3, ncol = 1)
+```
+
+The nine plots above bring us a new type of trend: a negative trend represented by Bulgaria. For most of the other European countries chosen, the slopes of their regression lines are all approximately horizontal.
+
+Bulgaria's situation might be explained by other reasons. We can do some research on it in discussion part.
+
+## South America
+```{r,echo=FALSE}
+z1 = question1_Brazil%>%
+ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab("Total population with access to safe drinking-water")+
+  ggtitle("Brazil log_gdp VS Total population with access to safe drinking-water")
+
+z2 = question1_colombia%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('Total population with access to safe drinking-water')+
+  ggtitle("Colombia log_gdp VS Total population with access to safe drinking-water")
+
+z3 = question1_suriname%>%
+  ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab('Total population with access to safe drinking-water')+
+  ggtitle("Suriname log_gdp VS Total population with access to safe drinking-water")
+
+z4 = question1_trinidad_and_tobago%>%
+ggplot(aes(x=log_gdp,y=`Total population with access to safe drinking-water (JMP)`))+
+  geom_point()+
+  geom_line()+
+  geom_smooth(formula = y ~ x,method = "lm",se = FALSE)+
+  ylab("Total population with access to safe drinking-water")+
+  ggtitle("Trinidad and Tobago log_gdp VS Total population with access to safe drinking-water")
+
+grid.arrange(z1,z2,z3,z4, nrow = 4, ncol = 1)
+
+```
+
+For the four plots above, the four countries chosen from South America shows a positive trend between total population with access to safe drinking-water and log_gdp. It seems that the log_gdp positively increases the total population with access to safe drinking-water when log_gdp increases for these countries.
+
+
+# Main Conclusion
+
+Only a few countries has negative trend between gdp and total population with access to safe drinking-water, Most of countries' higher gdp will increase the total population with access to safe drinking-water accordingly except the countries that already achieved a steady 100% total population with access to safe drinking-water.
+
+
+## Discussion
+
+To restate our research statement from above, we are attempting to find out if there is any relationship between a countries GDP and the percent of the population that has access to clean drinking water. 
+
+To start, let's take a look at the results of our data. For each country, we graphed scatter plots with a trend line having log(GDP) on the x-axis and total population with access to safe drinking-water (percent of the population with access to drinking water) on the y-axis (we used a log scale for GDP to make the graph more readable). From our entire bank of countries, we found that a total of 23 of them had a positive correlation, 1 had a negative correlation, and 4 had no apparent correlation (trend line was horizontal). 
+
+One important key to point out is that all of the countries that had a horizontal trend line either has 100% of the population with access to safe drinking water or very close to it, as well being heavily surrounded by a body of water. With this in mind, it is difficult to count these countries when trying to determine the overall influence of GDP on the percentage of a country's population with access to safe drinking water. For now, I am going to look at the data excluding these 4 countries, those being Canada, Japan, Singapore, and Australia.
+
+With this selective data set, 23 out of the 24 countries have a positive relationship. The only country with a negative relationship is Bulgaria. After doing some research, Bulgaria's water and sanitation infrastructure was built in the '60s and '70s and is in need of repair, as well as only 50% of the population is connected to a waste-water treatment plant (this data was taken from an OECD study about water supply and sanitation worldwide). This would be an explanation for this negative relationship, as none of the other countries have this issue to the same extent. 
+
+Combining what we have found in our data and in the research, the overwhelming majority of countries, whose population percentage with access to safe drinking water is not already at or very close to 100%, has a positive relationship with GDP and population percentage with access to safe drinking water, and it is likely that this trend holds true for the rest of the world's countries.
+
+In the future, one thing that we could look at is more background factors in each of these countries that could also be influencing population percentage with access to safe drinking water apart from GDP, things such as country location, climate, population size, etc.
+
+
+## Reference
+
+^[https://tableau.apps.fao.org/#/views/AQUASTATDashboard/country_dashboard]
